@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Razorpay Pay Button</title>
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+</head>
+<body>
+
+    <h2>Click to Pay ₹100</h2>
+    <button onclick="payNow()">Pay Now</button>
+
+    <script>
+        async function payNow() {
+            try {
+                // Step 1: Fetch Razorpay Key from your backend
+                const configResp = await fetch("http://localhost:8080/api/payments/config");
+                const config = await configResp.json(); // { key: "rzp_test_..." }
+
+                // Step 2: Create an order
+                const orderResp = await fetch("http://localhost:8080/api/payments/pay", {
+                    method: "POST"
+                });
+                const orderText = await orderResp.text();
+                const order = JSON.parse(orderText.replace("Order", "").trim());
+
+                // Step 3: Use the fetched key in Razorpay options
+                const options = {
+                    key: config.key,
+                    amount: order.amount,
+                    currency: order.currency,
+                    name: "Vaibhav Store",
+                    description: "Test Payment",
+                    order_id: order.id,
+                    handler: function (response) {
+                        // Step 4: Verify the payment
+                        fetch("http://localhost:8080/api/payments/verify", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify(response)
+                        }).then(res => res.text())
+                          .then(data => alert("✅ Payment Verified: " + data));
+                    },
+                    theme: {
+                        color: "#3399cc"
+                    }
+                };
+
+                const rzp = new Razorpay(options);
+                rzp.open();
+
+            } catch (error) {
+                console.error("Error during payment:", error);
+                alert("❌ Payment failed to initiate");
+            }
+        }
+    </script>
+
+</body>
+</html>
