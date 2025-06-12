@@ -192,9 +192,9 @@ public class PaymentService {
         return generatedSignature.equals(actualSignature);
     }
 	
-	  @Scheduled(fixedRate = 60000) 
+	  @Scheduled(fixedRate = 3600000) 
 	    public void deleteStaleOrders() {
-	        LocalDateTime tenMinutesAgo = LocalDateTime.now().minusMinutes(15);
+	        LocalDateTime tenMinutesAgo = LocalDateTime.now().minusHours(24);
 	        List<PaymentOrders> staleOrders = paymentRepo.findByPaymentStatusAndCreatedAtBefore(
 	            "pending", tenMinutesAgo);
 
