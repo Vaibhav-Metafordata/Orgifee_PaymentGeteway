@@ -1,10 +1,10 @@
 package com.payment.paymentIntegration.paymentService;
 
-import java.util.Date;
-import java.util.List;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.Date;
+import java.util.List;
 import java.util.Map;
 
 import javax.crypto.Mac;
@@ -18,9 +18,11 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
-
+import com.payment.paymentIntegration.controller.PaymentController;
 import com.payment.paymentIntegration.dto.PaymentOrders;
+import com.payment.paymentIntegration.dto.UserSubscription;
 import com.payment.paymentIntegration.paymentRepo.PaymentRepo;
+import com.payment.paymentIntegration.paymentRepo.SubscriptionRepo;
 import com.razorpay.Order;
 import com.razorpay.Payment;
 import com.razorpay.RazorpayClient;
@@ -37,7 +39,8 @@ public class PaymentService {
 
 	@Value("${razorpay.api.secret}")
 	private String apiSecret;
-	
+
+
 	public String getApiKey() {
 		return apiKey;
 	}
@@ -50,6 +53,9 @@ public class PaymentService {
 
 	@Autowired
 	private PaymentRepo paymentRepo;
+	
+	@Autowired
+	private SubscriptionRepo subscriptionRepo;
 
 	
 	public Order createOrder(PaymentOrders paymentOrders) throws RazorpayException
@@ -121,6 +127,8 @@ public class PaymentService {
 	}
 	
 	public ResponseEntity<String> processWebhook(String payload, String signature){
+		
+		
 		 try {
 	            if (!verifySignature(payload, signature, apiSecret)) {
 	                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Invalid Signature");
@@ -174,6 +182,36 @@ public class PaymentService {
 	                    paymentRepo.save(paymentOrders);
 	                }
 	            }
+	            else if (event.startsWith("subscription.")) {
+	                JSONObject entity = json
+	                        .getJSONObject("payload")
+	                        .getJSONObject("subscription")
+	                        .getJSONObject("entity");
+	               
+	                		
+	                UserSubscription sub =subscriptionRepo.findByRazorpaySubscriptionId(entity.getString("id"));
+	                		
+	                	 
+	                	
+	                    sub.setRazorpaySubscriptionId(entity.getString("id"));
+	                    sub.setCustomerId(entity.getString("customer_id"));
+	                    sub.setPlanId(entity.getString("plan_id"));
+	                    sub.setStatus(entity.getString("status"));
+	                    Long userId = Long.parseLong(entity.getJSONObject("notes").getString("user_id"));
+	                    sub.setUserId(userId);
+
+	                    long startEpoch = entity.optLong("current_start");
+	                    long endEpoch = entity.optLong("current_end");
+
+	                    sub.setStartDate(Instant.ofEpochSecond(startEpoch)
+	                                    .atZone(ZoneId.of("Asia/Kolkata"))
+	                                    .toLocalDateTime());
+	                    sub.setEndDate(Instant.ofEpochSecond(endEpoch)
+	                                    .atZone(ZoneId.of("Asia/Kolkata"))
+	                                    .toLocalDateTime());
+
+	                    subscriptionRepo.save(sub);
+	            }       
 	            return ResponseEntity.ok("Webhook processed");
 	            
 
@@ -215,6 +253,66 @@ public class PaymentService {
 			 return "Refund initiated with ID: " + refund.get("id");
 			
 	  }
+	  
+//	  public boolean verifyPan(String pan, String name) throws Exception {
+//		    String url = "https://api.razorpay.com/v1/pan/verify";
+//
+//		    RestTemplate restTemplate = new RestTemplate();
+//		    HttpHeaders headers = new HttpHeaders();
+//		    headers.setBasicAuth("rzp_live_isqTaTYxVwh15U", "MdMSOuNTn1DgRC7kmn9witrj");
+//		    headers.setContentType(MediaType.APPLICATION_JSON);
+//
+//		    Map<String, String> body = new HashMap<>();
+//		    body.put("pan", pan);
+//		    body.put("name", name);
+//
+//		    HttpEntity<Map<String, String>> request = new HttpEntity<>(body, headers);
+//
+//		    ResponseEntity<String> response = restTemplate.postForEntity(url, request, String.class);
+//		    JSONObject res = new JSONObject(response.getBody());
+//
+//		    return res.getBoolean("valid");
+//		}
+	  
+	  
+	  public ResponseEntity<String> createSubscription(Long userId) {
+	        try {
+	            RazorpayClient razorpay = new RazorpayClient(apiKey, apiSecret);
+
+	            JSONObject request = new JSONObject();
+	            request.put("plan_id","plan_QiZwsTPtdls3gA"); 
+	            request.put("total_count",12);
+	            request.put("customer_notify", 1);
+
+	            JSONObject notes = new JSONObject();
+	            notes.put("user_id", String.valueOf(userId));
+	            request.put("notes", notes);
+
+	            com.razorpay.Subscription razorpaySub = razorpay.subscriptions.create(request);
+	            String subscriptionId = razorpaySub.get("id");
+	            String shortUrl = razorpaySub.get("short_url");
+	            String customerId = razorpaySub.get("customer_id");
+	            String planId = razorpaySub.get("plan_id");
+	            String status = razorpaySub.get("status");
+	            
+	            
+	            UserSubscription sub = new UserSubscription();
+	            sub.setRazorpaySubscriptionId(subscriptionId);
+	            sub.setSubscriptionLink(shortUrl); 
+	            sub.setCustomerId(customerId);
+	            sub.setPlanId(planId);
+	            sub.setStatus(status);
+	            sub.setUserId(userId);
+	            sub.setStartDate(null); 
+	            sub.setEndDate(null);
+	            subscriptionRepo.save(sub);
+
+	            return ResponseEntity.ok(shortUrl);
+
+	        } catch (Exception e) {
+	            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error: " + e.getMessage());
+	        }
+	    }
 	
 }
  
