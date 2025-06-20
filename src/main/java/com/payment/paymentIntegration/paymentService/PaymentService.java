@@ -244,7 +244,6 @@ public class PaymentService {
 	  
 	  public String refundPayment(String paymentId) throws RazorpayException
 	  {
-		 
 			RazorpayClient razorpayClient=new RazorpayClient(apiKey,apiSecret);
 			JSONObject refundRequest=new JSONObject();
 			refundRequest.put("payment_id", paymentId);
@@ -254,65 +253,6 @@ public class PaymentService {
 			
 	  }
 	  
-//	  public boolean verifyPan(String pan, String name) throws Exception {
-//		    String url = "https://api.razorpay.com/v1/pan/verify";
-//
-//		    RestTemplate restTemplate = new RestTemplate();
-//		    HttpHeaders headers = new HttpHeaders();
-//		    headers.setBasicAuth("rzp_live_isqTaTYxVwh15U", "MdMSOuNTn1DgRC7kmn9witrj");
-//		    headers.setContentType(MediaType.APPLICATION_JSON);
-//
-//		    Map<String, String> body = new HashMap<>();
-//		    body.put("pan", pan);
-//		    body.put("name", name);
-//
-//		    HttpEntity<Map<String, String>> request = new HttpEntity<>(body, headers);
-//
-//		    ResponseEntity<String> response = restTemplate.postForEntity(url, request, String.class);
-//		    JSONObject res = new JSONObject(response.getBody());
-//
-//		    return res.getBoolean("valid");
-//		}
-	  
-	  
-	  public ResponseEntity<String> createSubscription(Long userId) {
-	        try {
-	            RazorpayClient razorpay = new RazorpayClient(apiKey, apiSecret);
-
-	            JSONObject request = new JSONObject();
-	            request.put("plan_id","plan_QiZwsTPtdls3gA"); 
-	            request.put("total_count",12);
-	            request.put("customer_notify", 1);
-
-	            JSONObject notes = new JSONObject();
-	            notes.put("user_id", String.valueOf(userId));
-	            request.put("notes", notes);
-
-	            com.razorpay.Subscription razorpaySub = razorpay.subscriptions.create(request);
-	            String subscriptionId = razorpaySub.get("id");
-	            String shortUrl = razorpaySub.get("short_url");
-	            String customerId = razorpaySub.get("customer_id");
-	            String planId = razorpaySub.get("plan_id");
-	            String status = razorpaySub.get("status");
-	            
-	            
-	            UserSubscription sub = new UserSubscription();
-	            sub.setRazorpaySubscriptionId(subscriptionId);
-	            sub.setSubscriptionLink(shortUrl); 
-	            sub.setCustomerId(customerId);
-	            sub.setPlanId(planId);
-	            sub.setStatus(status);
-	            sub.setUserId(userId);
-	            sub.setStartDate(null); 
-	            sub.setEndDate(null);
-	            subscriptionRepo.save(sub);
-
-	            return ResponseEntity.ok(shortUrl);
-
-	        } catch (Exception e) {
-	            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error: " + e.getMessage());
-	        }
-	    }
 	
 }
  

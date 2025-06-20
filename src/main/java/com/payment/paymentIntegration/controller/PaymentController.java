@@ -82,16 +82,5 @@ public class PaymentController {
 	 {
 		 return ResponseEntity.status(HttpStatus.ACCEPTED).body(paymentService.refundPayment(paymentId));
 	 }
-	 
-//	 @PostMapping("/pan")
-//	 public boolean demoPanVerify(@RequestParam String pan,@RequestParam String name) throws Exception
-//	 {
-//		return paymentService.verifyPan(pan, name);
-//	 }
-	 
-	 @PostMapping("/create-subscription")
-	    public ResponseEntity<String> createSubscription(@RequestParam Long userId) {
-	        return paymentService.createSubscription(userId);
-	    }
 
 }

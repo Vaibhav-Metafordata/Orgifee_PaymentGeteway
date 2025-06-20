@@ -185,10 +185,10 @@
         }
 
         async function subscribeNow() {
-            const userId = "377"; // Replace with actual session user ID
+            const userId = "377"; 
 
             try {
-                const response = await fetch(`http://localhost:8080/api/payments/create-subscription?userId=${userId}`, {
+                const response = await fetch(`http://localhost:8080/api/service/create-subscription?userId=${userId}`, {
                     method: "POST"
                 });
 
