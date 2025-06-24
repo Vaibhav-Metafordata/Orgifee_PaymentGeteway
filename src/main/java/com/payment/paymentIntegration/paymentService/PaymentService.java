@@ -1,11 +1,13 @@
 package com.payment.paymentIntegration.paymentService;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
@@ -18,13 +20,15 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
-import com.payment.paymentIntegration.controller.PaymentController;
+
+import com.payment.paymentIntegration.dto.PaymentLinkRequestDto;
 import com.payment.paymentIntegration.dto.PaymentOrders;
 import com.payment.paymentIntegration.dto.UserSubscription;
 import com.payment.paymentIntegration.paymentRepo.PaymentRepo;
 import com.payment.paymentIntegration.paymentRepo.SubscriptionRepo;
 import com.razorpay.Order;
 import com.razorpay.Payment;
+import com.razorpay.PaymentLink;
 import com.razorpay.RazorpayClient;
 import com.razorpay.RazorpayException;
 import com.razorpay.Refund;
@@ -32,6 +36,7 @@ import com.razorpay.Utils;
 
 @Service
 public class PaymentService {
+
 	
 	@Value("${razorpay.api.key}")
 	private String apiKey;
@@ -46,43 +51,35 @@ public class PaymentService {
 	}
 
 
-	public PaymentRepo getPaymentRepo() {
-		return paymentRepo;
-	}
-
-
 	@Autowired
 	private PaymentRepo paymentRepo;
 	
-	@Autowired
-	private SubscriptionRepo subscriptionRepo;
 
 	
-	public Order createOrder(PaymentOrders paymentOrders) throws RazorpayException
+	public Order createOrder(Long UserId,BigDecimal amount,Long orderId) throws RazorpayException
 	{
 		RazorpayClient razorpayClient=new RazorpayClient(apiKey, apiSecret);
 		
 		JSONObject jsonObject=new JSONObject();
-		jsonObject.put("amount", paymentOrders.getAmount()*100);
+		BigDecimal amountINPaise =amount.multiply(new BigDecimal("100"));
+		jsonObject.put("amount", amountINPaise.intValue());
 		jsonObject.put("currency","INR");
-		jsonObject.put("receipt",paymentOrders.getEmail());
+		String receiptId ="recepit"+UUID.randomUUID().toString().substring(0, 20);
+		jsonObject.put("receipt",receiptId);
 		
 		Order order=razorpayClient.orders.create(jsonObject);
 		
 		
 		PaymentOrders payorders =new PaymentOrders();
-		payorders.setName(paymentOrders.getName());
-		payorders.setEmail(paymentOrders.getEmail());
-		payorders.setAmount(paymentOrders.getAmount());
-		payorders.setOrderStatus(order.get("status"));
-		payorders.setPh_no(paymentOrders.getPh_no());
+		payorders.setUserId(UserId);
+		payorders.setOrderId(orderId);
+		payorders.setAmount(amount);
 		payorders.setRazorpayOrderId(order.get("id"));
-		payorders.setRazorpayPaymentId(paymentOrders.getRazorpayPaymentId());
-		payorders.setPaymentStatus(paymentOrders.getPaymentStatus());
+		payorders.setPaymentStatus(order.get("status"));
 		payorders.setCreatedAt(LocalDateTime.now());
 		payorders.setUpdateAt(LocalDateTime.now());
 		
-		paymentRepo.save(payorders);
+		paymentRepo.save(payorders); 
 
 		return order;		
 	}
@@ -98,6 +95,7 @@ public class PaymentService {
 		Payment payment =razorpayClient.payments.fetch(data.get("razorpay_payment_id").toString());
 		
 		paymentOrders.setPaymentStatus(payment.get("status"));
+		paymentOrders.setPaymentMethod(payment.get("method"));
 		
 		Date createdAtDate = (Date) payment.get("created_at");
 
@@ -116,16 +114,17 @@ public class PaymentService {
 			Utils.verifyPaymentSignature(jsonObject, apiSecret);
 			paymentOrders.setUpdateAt(createdAt);
 			paymentRepo.save(paymentOrders);
-			return "Payment verified and recorded!";
+			return payment.get("status").toString();
 			
 		}
 		catch(Exception e)
 		{
-			return "Payment verification failed!";
+			return payment.get("status").toString();
 			
 		}
 	}
-	
+
+
 	public ResponseEntity<String> processWebhook(String payload, String signature){
 		
 		
@@ -145,17 +144,18 @@ public class PaymentService {
 
 	                String paymentId = entity.getString("id");
 	                String status = entity.getString("status");
+	                String method = entity.getString("method");
 	                long timestamp = entity.getLong("created_at");
 	                LocalDateTime updateAt = Instant.ofEpochSecond(timestamp)
 	                    .atZone(ZoneId.of("Asia/Kolkata"))
 	                    .toLocalDateTime();
-
 
 	                PaymentOrders paymentOrders = paymentRepo.findByRazorpayPaymentId(paymentId);
 	               if(paymentOrders!=null)
 	               {
 	               paymentOrders.setPaymentStatus(status);
 	               paymentOrders.setUpdateAt(updateAt);
+	               paymentOrders.setPaymentMethod(method);  
 	               paymentRepo.save(paymentOrders);
 
 	               }
@@ -182,36 +182,7 @@ public class PaymentService {
 	                    paymentRepo.save(paymentOrders);
 	                }
 	            }
-	            else if (event.startsWith("subscription.")) {
-	                JSONObject entity = json
-	                        .getJSONObject("payload")
-	                        .getJSONObject("subscription")
-	                        .getJSONObject("entity");
-	               
-	                		
-	                UserSubscription sub =subscriptionRepo.findByRazorpaySubscriptionId(entity.getString("id"));
-	                		
-	                	 
-	                	
-	                    sub.setRazorpaySubscriptionId(entity.getString("id"));
-	                    sub.setCustomerId(entity.getString("customer_id"));
-	                    sub.setPlanId(entity.getString("plan_id"));
-	                    sub.setStatus(entity.getString("status"));
-	                    Long userId = Long.parseLong(entity.getJSONObject("notes").getString("user_id"));
-	                    sub.setUserId(userId);
-
-	                    long startEpoch = entity.optLong("current_start");
-	                    long endEpoch = entity.optLong("current_end");
-
-	                    sub.setStartDate(Instant.ofEpochSecond(startEpoch)
-	                                    .atZone(ZoneId.of("Asia/Kolkata"))
-	                                    .toLocalDateTime());
-	                    sub.setEndDate(Instant.ofEpochSecond(endEpoch)
-	                                    .atZone(ZoneId.of("Asia/Kolkata"))
-	                                    .toLocalDateTime());
-
-	                    subscriptionRepo.save(sub);
-	            }       
+	    	
 	            return ResponseEntity.ok("Webhook processed");
 	            
 
@@ -234,7 +205,7 @@ public class PaymentService {
 	    public void deleteStaleOrders() {
 	        LocalDateTime tenMinutesAgo = LocalDateTime.now().minusHours(24);
 	        List<PaymentOrders> staleOrders = paymentRepo.findByPaymentStatusAndCreatedAtBefore(
-	            "pending", tenMinutesAgo);
+	            "created", tenMinutesAgo);
 
 	        if (!staleOrders.isEmpty()) {
 	        	paymentRepo.deleteAll(staleOrders);

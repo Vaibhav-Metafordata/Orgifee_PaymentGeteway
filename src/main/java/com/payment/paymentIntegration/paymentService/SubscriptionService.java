@@ -3,6 +3,7 @@ package com.payment.paymentIntegration.paymentService;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.List;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
@@ -12,10 +13,12 @@ import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import com.payment.paymentIntegration.dto.UserSubscription;
+import com.payment.paymentIntegration.exception.SubscriptionAlreadyExistsException;
 import com.payment.paymentIntegration.paymentRepo.SubscriptionRepo;
 import com.razorpay.RazorpayClient;
 
@@ -34,14 +37,22 @@ public class SubscriptionService {
 	
 	
 	public ResponseEntity<String> createSubscription(Long userId) {
+		
+//		UserSubscription userSubscription= subscriptionRepo.findByUserIdOrStatusActive(userId);
+//		if(userSubscription!=null)
+//		{
+//			throw new SubscriptionAlreadyExistsException("User already has an active subscription");
+//		}
+		
         try {
+        	
             RazorpayClient razorpay = new RazorpayClient(apiKey, apiSecret);
 
             JSONObject request = new JSONObject();
             request.put("plan_id","plan_QiZwsTPtdls3gA"); 
             request.put("total_count",12);
             request.put("customer_notify", 1);
-
+           
             JSONObject notes = new JSONObject();
             notes.put("user_id", String.valueOf(userId));
             request.put("notes", notes);
@@ -63,6 +74,7 @@ public class SubscriptionService {
             sub.setUserId(userId);
             sub.setStartDate(null); 
             sub.setEndDate(null);
+            sub.setCreateAt(LocalDateTime.now());
             subscriptionRepo.save(sub);
 
             return ResponseEntity.ok(shortUrl);
@@ -108,6 +120,7 @@ public class SubscriptionService {
                 sub.setEndDate(Instant.ofEpochSecond(endEpoch)
                                 .atZone(ZoneId.of("Asia/Kolkata"))
                                 .toLocalDateTime());
+                sub.setCreateAt(LocalDateTime.now());
 
                 subscriptionRepo.save(sub);
         }       

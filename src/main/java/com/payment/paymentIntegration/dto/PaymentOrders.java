@@ -1,5 +1,6 @@
 package com.payment.paymentIntegration.dto;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 import org.springframework.boot.context.properties.bind.DefaultValue;
@@ -13,18 +14,19 @@ public class PaymentOrders {
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long Id;
-	private String name;
-	private String email;
-	private String ph_no;
 	
-	private String orderStatus;
-	private Long amount;
+	private BigDecimal amount;
 	private String razorpayOrderId;
 	private String razorpayPaymentId="pending";
-	private String PaymentStatus="pending";
+	private String PaymentStatus;
 	private String RefundId="Not Refunded";
 	private LocalDateTime createdAt;
 	private LocalDateTime updateAt;
+	private Long userId;
+	private String paymentMethod;
+	private Long orderId;
+	
+	
 	
 	
 	
@@ -43,41 +45,11 @@ public class PaymentOrders {
 	public void setId(Long id) {
 		Id = id;
 	}
-	public String getName() {
-		return name;
-	}
-	public void setName(String name) {
-		this.name = name;
-	}
-	public String getEmail() {
-		return email;
-	}
-	public void setEmail(String email) {
-		this.email = email;
-	}
-	public String getPh_no() {
-		return ph_no;
-	}
-	public void setPh_no(String ph_no) {
-		this.ph_no = ph_no;
-	}
-	public String getOrderStatus() {
-		return orderStatus;
-	}
-	public void setOrderStatus(String orderStatus) {
-		this.orderStatus = orderStatus;
-	}
-	public Long getAmount() {
+	public BigDecimal getAmount() {
 		return amount;
 	}
-	public void setAmount(Long amount) {
+	public void setAmount(BigDecimal amount) {
 		this.amount = amount;
-	}
-	public String getRazorpayOrderId() {
-		return razorpayOrderId;
-	}
-	public void setRazorpayOrderId(String razorpayOrderId) {
-		this.razorpayOrderId = razorpayOrderId;
 	}
 	public String getRazorpayPaymentId() {
 		return razorpayPaymentId;
@@ -103,8 +75,28 @@ public class PaymentOrders {
 	public void setRefundId(String refundId) {
 		RefundId = refundId;
 	}
-	
-	
-	
-
+	public Long getUserId() {
+		return userId;
+	}
+	public void setUserId(Long userId) {
+		this.userId = userId;
+	}
+	public String getPaymentMethod() {
+		return paymentMethod;
+	}
+	public void setPaymentMethod(String paymentMethod) {
+		this.paymentMethod = paymentMethod;
+	}
+	public Long getOrderId() {
+		return orderId;
+	}
+	public void setOrderId(Long orderId) {
+		this.orderId = orderId;
+	}
+	public String getRazorpayOrderId() {
+		return razorpayOrderId;
+	}
+	public void setRazorpayOrderId(String razorpayOrderId) {
+		this.razorpayOrderId = razorpayOrderId;
+	}
 }

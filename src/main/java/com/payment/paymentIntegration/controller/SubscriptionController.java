@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.payment.paymentIntegration.paymentService.SubscriptionService;
 
 @RestController
-@RequestMapping("api/service")
+@RequestMapping("api/subscription")
 public class SubscriptionController {
 	
 	@Autowired
@@ -24,7 +24,7 @@ public class SubscriptionController {
 	    }
 	 
 	 
-	 @PostMapping("/subscription/webhook")
+	 @PostMapping("/webhook")
 	    public ResponseEntity<String> handleWebhook(
 	            @RequestBody String payload,
 	            @RequestHeader("X-Razorpay-Signature") String signature) {

@@ -1,6 +1,7 @@
  package com.payment.paymentIntegration.controller;
 
 
+import java.math.BigDecimal;
 import java.util.Map;
 
 import javax.crypto.Mac;
@@ -21,6 +22,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.payment.paymentIntegration.dto.PaymentLinkRequestDto;
 import com.payment.paymentIntegration.dto.PaymentOrders;
 import com.payment.paymentIntegration.paymentRepo.PaymentRepo;
 import com.payment.paymentIntegration.paymentService.PaymentService;
@@ -37,8 +39,6 @@ public class PaymentController {
 	@Autowired
 	 private PaymentService paymentService;
 	
-	@Autowired
-	private PaymentRepo paymentRepo;
 	
 	@GetMapping("/config")
 	public ResponseEntity<Map<String, String>> getRazorpayKey() {
@@ -46,18 +46,13 @@ public class PaymentController {
 	}
 	
 	@PostMapping("/pay")
-	public ResponseEntity<String> createOrder() throws RazorpayException
-	{
-		PaymentOrders paymentOrders=new PaymentOrders();
-		paymentOrders.setName("vaibhav");
-		paymentOrders.setPh_no("7666735297");
-		paymentOrders.setEmail("vaibhav@gmail.com");
-		paymentOrders.setAmount(10l);
-		
-		Order jb=paymentService.createOrder(paymentOrders);
-		return ResponseEntity.status(HttpStatus.CREATED).body(jb.toJson().toString());
+	public ResponseEntity<String> createOrder(@RequestParam Long userId ,@RequestParam BigDecimal amount,@RequestParam Long orderId) throws RazorpayException
+	{	
+		Order order=paymentService.createOrder(userId,amount,orderId);
+		return ResponseEntity.status(HttpStatus.CREATED).body(order.toJson().toString());
 		
 	}
+	
 	
 	@PostMapping("/verify")
 	public ResponseEntity<String> verifyPayment(@RequestBody Map<String, Object> data) throws RazorpayException
