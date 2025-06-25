@@ -20,6 +20,11 @@ public interface PaymentRepo extends JpaRepository<PaymentOrders, Long> {
 	List<PaymentOrders> findByPaymentStatusAndCreatedAtBefore(
 	    @Param("paymentStatus") String paymentStatus,
 	    @Param("time") LocalDateTime time);
+	
+	@Query("SELECT p FROM PaymentOrders p WHERE p.razorpayPaymentId = :paymentId AND p.paymentStatus = 'Refunded - processed'")
+	PaymentOrders findRefundedProcessedPayment(@Param("paymentId") String paymentId);
+
+
 
 	
 }

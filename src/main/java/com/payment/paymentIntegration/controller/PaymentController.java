@@ -53,6 +53,14 @@ public class PaymentController {
 		
 	}
 	
+//	@PostMapping("/pay")
+//	public ResponseEntity<String> createPaymentLink(@RequestBody PaymentLinkRequestDto dto ) throws RazorpayException
+//	{
+//	
+//			String link=paymentService.createPaymentLink(dto);
+//			
+//			return ResponseEntity.status(HttpStatus.CREATED).body(link);
+//	}
 	
 	@PostMapping("/verify")
 	public ResponseEntity<String> verifyPayment(@RequestBody Map<String, Object> data) throws RazorpayException

@@ -23,6 +23,7 @@ public class UserSubscription {
     private LocalDateTime startDate;
     private LocalDateTime endDate;
     private LocalDateTime createAt;
+    private String planName;
     
     
 	public Long getId() {
@@ -84,6 +85,12 @@ public class UserSubscription {
 	}
 	public void setCreateAt(LocalDateTime createAt) {
 		this.createAt = createAt;
+	}
+	public String getPlanName() {
+		return planName;
+	}
+	public void setPlanName(String planName) {
+		this.planName = planName;
 	}
 
    

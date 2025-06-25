@@ -18,7 +18,7 @@ public class PaymentOrders {
 	private BigDecimal amount;
 	private String razorpayOrderId;
 	private String razorpayPaymentId="pending";
-	private String PaymentStatus;
+	private String paymentStatus;
 	private String RefundId="Not Refunded";
 	private LocalDateTime createdAt;
 	private LocalDateTime updateAt;
@@ -31,14 +31,6 @@ public class PaymentOrders {
 	
 	
 	
-	
-	
-	public String getPaymentStatus() {
-		return PaymentStatus;
-	}
-	public void setPaymentStatus(String paymentStatus) {
-		PaymentStatus = paymentStatus;
-	}
 	public Long getId() {
 		return Id;
 	}
@@ -98,5 +90,11 @@ public class PaymentOrders {
 	}
 	public void setRazorpayOrderId(String razorpayOrderId) {
 		this.razorpayOrderId = razorpayOrderId;
+	}
+	public String getPaymentStatus() {
+		return paymentStatus;
+	}
+	public void setPaymentStatus(String paymentStatus) {
+		this.paymentStatus = paymentStatus;
 	}
 }

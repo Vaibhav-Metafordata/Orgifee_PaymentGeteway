@@ -24,6 +24,7 @@ import org.springframework.stereotype.Service;
 import com.payment.paymentIntegration.dto.PaymentLinkRequestDto;
 import com.payment.paymentIntegration.dto.PaymentOrders;
 import com.payment.paymentIntegration.dto.UserSubscription;
+import com.payment.paymentIntegration.exception.RefundAlreadyDone;
 import com.payment.paymentIntegration.paymentRepo.PaymentRepo;
 import com.payment.paymentIntegration.paymentRepo.SubscriptionRepo;
 import com.razorpay.Order;
@@ -124,7 +125,45 @@ public class PaymentService {
 		}
 	}
 
+	
+//	public String createPaymentLink(PaymentLinkRequestDto dto) throws RazorpayException {
+//	    RazorpayClient razorpayClient = new RazorpayClient(apiKey, apiSecret);
+//	    BigDecimal amountInPaise = dto.getAmount().multiply(new BigDecimal("100"));
+//
+//	    JSONObject request = new JSONObject();
+//	    request.put("amount", amountInPaise.intValue());
+//	    request.put("currency", "INR");
+//	    request.put("accept_partial", false);
+//	    request.put("description", dto.getDescription());
+//	    request.put("reference_id", dto.getReferenceId() != null ? dto.getReferenceId() : "txn_" + UUID.randomUUID().toString().substring(0, 10));
+//
+//	    JSONObject customer = new JSONObject();
+//	    customer.put("name", dto.getCustomerName());
+//	    customer.put("contact", dto.getCustomerContact());
+//	    customer.put("email", dto.getCustomerEmail());
+//	    request.put("customer", customer);
+//
+//	    request.put("notify", new JSONObject().put("email", true).put("sms", true));
+//
+//	    PaymentLink link = razorpayClient.paymentLink.create(request);
+//
+//	    PaymentOrders payment = new PaymentOrders();
+//	    payment.setUserId(dto.getUserId());
+//	    payment.setOrderId(dto.getOrderId());
+//	    payment.setAmount(dto.getAmount());
+//	    payment.setPaymentStatus("created");
+//	    payment.setRazorpayReferenceId(link.get("id"));
+//	    payment.setPaymentLinkUrl(link.get("short_url"));
+//	    payment.setCreatedAt(LocalDateTime.now());
+//	    payment.setUpdateAt(LocalDateTime.now());
+//
+//	    paymentRepo.save(payment);
+//
+//	    return link.get("short_url");
+//	}
+	
 
+	
 	public ResponseEntity<String> processWebhook(String payload, String signature){
 		
 		
@@ -165,6 +204,9 @@ public class PaymentService {
 	                    .getJSONObject("payload")
 	                    .getJSONObject("refund")
 	                    .getJSONObject("entity");
+	                
+	                
+	                System.out.println(new JSONObject(payload).toString());
 
 	                String paymentId = entity.getString("payment_id"); 
 	                String status = entity.getString("status");
@@ -218,6 +260,15 @@ public class PaymentService {
 			RazorpayClient razorpayClient=new RazorpayClient(apiKey,apiSecret);
 			JSONObject refundRequest=new JSONObject();
 			refundRequest.put("payment_id", paymentId);
+			
+			PaymentOrders refundedProcessedPayment = paymentRepo.findRefundedProcessedPayment(paymentId);
+			
+			if(refundedProcessedPayment!=null)
+			{
+				throw new RefundAlreadyDone("Refund Already Completed");
+			}
+			
+			
 			Refund refund=razorpayClient.refunds.create(refundRequest);
 			
 			 return "Refund initiated with ID: " + refund.get("id");

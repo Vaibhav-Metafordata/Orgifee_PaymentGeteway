@@ -20,6 +20,7 @@ import org.springframework.stereotype.Service;
 import com.payment.paymentIntegration.dto.UserSubscription;
 import com.payment.paymentIntegration.exception.SubscriptionAlreadyExistsException;
 import com.payment.paymentIntegration.paymentRepo.SubscriptionRepo;
+import com.razorpay.Plan;
 import com.razorpay.RazorpayClient;
 
 @Service
@@ -38,11 +39,11 @@ public class SubscriptionService {
 	
 	public ResponseEntity<String> createSubscription(Long userId) {
 		
-//		UserSubscription userSubscription= subscriptionRepo.findByUserIdOrStatusActive(userId);
-//		if(userSubscription!=null)
-//		{
-//			throw new SubscriptionAlreadyExistsException("User already has an active subscription");
-//		}
+		UserSubscription userSubscription= subscriptionRepo.findByUserIdOrStatusActive(userId);
+		if(userSubscription!=null)
+		{
+			throw new SubscriptionAlreadyExistsException("User already has an active subscription");
+		}
 		
         try {
         	
@@ -64,6 +65,11 @@ public class SubscriptionService {
             String planId = razorpaySub.get("plan_id");
             String status = razorpaySub.get("status");
             
+            Plan plan=razorpay.plans.fetch(planId);   
+            JSONObject item=plan.get("item");
+            
+            JSONObject itemObj=new JSONObject(item.toString());
+            String planName = itemObj.getString("name");
             
             UserSubscription sub = new UserSubscription();
             sub.setRazorpaySubscriptionId(subscriptionId);
@@ -75,6 +81,7 @@ public class SubscriptionService {
             sub.setStartDate(null); 
             sub.setEndDate(null);
             sub.setCreateAt(LocalDateTime.now());
+            sub.setPlanName(planName);
             subscriptionRepo.save(sub);
 
             return ResponseEntity.ok(shortUrl);

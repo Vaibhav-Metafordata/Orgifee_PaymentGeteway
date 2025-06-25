@@ -1,149 +1,242 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Vaibhav Payment Portal</title>
-    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
-    <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: #f4f7f9;
-            color: #333;
-            text-align: center;
-            padding-top: 80px;
-        }
+  <meta charset="UTF-8">
+  <title>Vaibhav Payment Portal</title>
+  <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #e0eafc, #cfdef3);
+      margin: 0;
+      padding: 0;
+      color: #333;
+    }
 
-        h1 {
-            margin-bottom: 10px;
-            color: #222;
-        }
+    .container {
+      max-width: 1200px;
+      margin: 80px auto;
+      padding: 0 20px;
+      text-align: center;
+    }
 
-        h2 {
-            color: #555;
-            margin-top: 40px;
-        }
+    h1 {
+      font-size: 2.5rem;
+      margin-bottom: 40px;
+      color: #222;
+    }
 
-        .btn {
-            display: inline-block;
-            padding: 12px 28px;
-            margin-top: 15px;
-            margin-bottom: 20px;
-            font-size: 16px;
-            font-weight: bold;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: background 0.3s ease;
-            text-transform: uppercase;
-        }
+    .cards-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 30px;
+      flex-wrap: wrap;
+    }
 
-        .btn-pay {
-            background-color: #3399cc;
-            color: white;
-        }
+    .card {
+      flex: 1;
+      min-width: 280px;
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.1);
+      padding: 30px 20px;
+      transition: transform 0.3s ease;
+    }
 
-        .btn-pay:hover {
-            background-color: #2a7ca3;
-        }
+    .card:hover {
+      transform: translateY(-8px);
+    }
 
-        .btn-subscribe {
-            background-color: #28a745;
-            color: white;
-        }
+    .card h2 {
+      font-size: 1.25rem;
+      margin-bottom: 20px;
+    }
 
-        .btn-subscribe:hover {
-            background-color: #208b39;
-        }
+    .btn {
+      display: inline-block;
+      padding: 12px 28px;
+      font-size: 15px;
+      font-weight: 600;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
 
-        .container {
-            max-width: 500px;
-            margin: auto;
-            background: white;
-            padding: 30px;
-            border-radius: 16px;
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
-        }
+    .btn-pay {
+      background-color: #3399cc;
+      color: white;
+    }
 
-        footer {
-            margin-top: 60px;
-            font-size: 14px;
-            color: #888;
-        }
-    </style>
+    .btn-pay:hover {
+      background-color: #2a7ca3;
+    }
+
+    .btn-subscribe {
+      background-color: #28a745;
+      color: white;
+    }
+
+    .btn-subscribe:hover {
+      background-color: #208b39;
+    }
+
+    .btn-refund {
+      background-color: #dc3545;
+      color: white;
+    }
+
+    .btn-refund:hover {
+      background-color: #b02a37;
+    }
+
+    input[type="text"] {
+      padding: 10px;
+      margin-bottom: 12px;
+      width: 90%;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+    }
+
+    footer {
+      text-align: center;
+      margin-top: 160px;
+      font-size: 18px;
+      color: #888;
+    }
+
+    @media (max-width: 768px) {
+      .cards-row {
+        flex-direction: column;
+        align-items: center;
+      }
+    }
+  </style>
 </head>
 <body>
 
-    <div class="container">
-        <h1>Welcome to Vaibhav's Payment Portal</h1>
-        
-        <h2>Click to Pay ₹10 (One-time)</h2>
+  <div class="container">
+    <h1>Welcome to Vaibhav's Payment Portal</h1>
+
+    <div class="cards-row">
+      <div class="card">
+        <h2>Pay ₹10 (One-time)</h2>
         <button class="btn btn-pay" onclick="payNow()">Pay Now</button>
+      </div>
 
-        <h2>Or Subscribe for Monthly Access</h2>
-        <button class="btn btn-subscribe" onclick="subscribeNow()">Subscribe Now</button>
+      <div class="card">
+        <h2>Subscribe Monthly</h2>
+        <button class="btn btn-subscribe" onclick="subscribeNow()">Subscribe</button>
+      </div>
+
+      <div class="card">
+        <h2>Request Refund</h2>
+        <input id="paymentIdInput" type="text" placeholder="Enter Razorpay Payment ID">
+        <br />
+        <button class="btn btn-refund" onclick="refundPayment()">Refund</button>
+      </div>
     </div>
+  </div>
 
-    <footer>© 2025 Vaibhav Pvt. Ltd.</footer>
+  <footer>
+      © 2025 Vaibhav Pvt. Ltd. | Crafted with ❤️ for seamless payments
+    </footer>
 
-    <script>
-        async function payNow() {
-            const userId = "1432";
-            const amount = 10;
-            const orderId = 12345;
+  <script>
+    async function payNow() {
+      const userId = "1432";
+      const amount = 10;
+      const orderId = 12345;
 
-            try {
-                const configResp = await fetch("http://localhost:8080/api/payments/config");
-                const config = await configResp.json();
+      try {
+        const configResp = await fetch("http://localhost:8080/api/payments/config");
+        const config = await configResp.json();
 
-                const orderResp = await fetch(`http://localhost:8080/api/payments/pay?userId=${userId}&amount=${amount}&orderId=${orderId}`, {
-                    method: "POST"
-                });
-                const orderText = await orderResp.text();
-                const order = JSON.parse(orderText.replace("Order", "").trim());
+        const orderResp = await fetch(`http://localhost:8080/api/payments/pay?userId=${userId}&amount=${amount}&orderId=${orderId}`, {
+          method: "POST"
+        });
+        const orderText = await orderResp.text();
+        const order = JSON.parse(orderText.replace("Order", "").trim());
 
-                const options = {
-                    key: config.key,
-                    amount: order.amount,
-                    currency: order.currency,
-                    name: "Vaibhav Store",
-                    description: "Test Payment",
-                    order_id: order.id,
-                    handler: function (response) {
-                        fetch("http://localhost:8080/api/payments/verify", {
-                            method: "POST",
-                            headers: { "Content-Type": "application/json" },
-                            body: JSON.stringify(response)
-                        }).then(res => res.text())
-                          .then(data => alert("✅ Payment Verified: " + data));
-                    },
-                    theme: { color: "#3399cc" }
-                };
+        const options = {
+          key: config.key,
+          amount: order.amount,
+          currency: order.currency,
+          name: "Vaibhav Store",
+          description: "Test Payment",
+          order_id: order.id,
+          handler: function (response) {
+            fetch("http://localhost:8080/api/payments/verify", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(response)
+            }).then(res => res.text())
+              .then(data => alert("✅ Payment Verified: " + data));
+          },
+          theme: { color: "#3399cc" }
+        };
 
-                const rzp = new Razorpay(options);
-                rzp.open();
+        const rzp = new Razorpay(options);
+        rzp.open();
 
-            } catch (error) {
-                console.error("Error during payment:", error);
-                alert("❌ Payment failed to initiate");
-            }
+      } catch (error) {
+        console.error("Error during payment:", error);
+        alert("❌ Payment failed to initiate");
+      }
+    }
+
+    async function subscribeNow() {
+      const userId = "8765";
+
+      try {
+        const response = await fetch(`http://localhost:8080/api/subscription/create-subscription?userId=${userId}`, {
+          method: "POST"
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          alert("❌ " + errorData.message);
+          return;
         }
 
-        async function subscribeNow() {
-            const userId = "1234";
+        const subscriptionLink = await response.text();
+        window.location.href = subscriptionLink;
 
-            try {
-                const response = await fetch(`http://localhost:8080/api/subscription/create-subscription?userId=${userId}`, {
-                    method: "POST"
-                });
+      } catch (err) {
+        alert("❌ Subscription failed: " + err);
+      }
+    }
 
-                const subscriptionLink = await response.text();
-                window.location.href = subscriptionLink;
+    async function refundPayment() {
+      const paymentId = document.getElementById("paymentIdInput").value.trim();
 
-            } catch (err) {
-                alert("❌ Subscription failed: " + err);
-            }
+      if (!paymentId) {
+        alert("Please enter a valid Payment ID");
+        return;
+      }
+
+      try {
+        const response = await fetch(`http://localhost:8080/api/payments/refund?paymentId=${paymentId}`, {
+          method: "PUT"
+        });
+
+        const result = await response.text();
+
+        if (response.ok) {
+          alert("✅ " + result);
+        } else {
+          try {
+            const errorData = JSON.parse(result);
+            alert("❌ " + errorData.message);
+          } catch (e) {
+            alert("❌ " + result);
+          }
         }
-    </script>
+      } catch (err) {
+        alert("❌ Error processing refund: " + err.message);
+      }
+    }
+  </script>
 
 </body>
 </html>
