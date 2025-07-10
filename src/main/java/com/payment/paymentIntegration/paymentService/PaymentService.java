@@ -24,6 +24,7 @@ import org.springframework.stereotype.Service;
 import com.payment.paymentIntegration.dto.PaymentLinkRequestDto;
 import com.payment.paymentIntegration.dto.PaymentOrders;
 import com.payment.paymentIntegration.dto.UserSubscription;
+import com.payment.paymentIntegration.exception.IllegalArgumentExceptio;
 import com.payment.paymentIntegration.exception.RefundAlreadyDone;
 import com.payment.paymentIntegration.paymentRepo.PaymentRepo;
 import com.payment.paymentIntegration.paymentRepo.SubscriptionRepo;
@@ -165,8 +166,6 @@ public class PaymentService {
 
 	
 	public ResponseEntity<String> processWebhook(String payload, String signature){
-		
-		
 		 try {
 	            if (!verifySignature(payload, signature, apiSecret)) {
 	                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Invalid Signature");
@@ -204,9 +203,6 @@ public class PaymentService {
 	                    .getJSONObject("payload")
 	                    .getJSONObject("refund")
 	                    .getJSONObject("entity");
-	                
-	                
-	                System.out.println(new JSONObject(payload).toString());
 
 	                String paymentId = entity.getString("payment_id"); 
 	                String status = entity.getString("status");
@@ -226,8 +222,6 @@ public class PaymentService {
 	            }
 	    	
 	            return ResponseEntity.ok("Webhook processed");
-	            
-
 	        } catch (Exception e) {
 	            e.printStackTrace();
 	            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error");
@@ -261,6 +255,11 @@ public class PaymentService {
 			JSONObject refundRequest=new JSONObject();
 			refundRequest.put("payment_id", paymentId);
 			
+			if(!paymentRepo.existsByRazorpayPaymentId(paymentId))
+			{
+				throw new IllegalArgumentExceptio("Payment ID not found");
+			}
+			
 			PaymentOrders refundedProcessedPayment = paymentRepo.findRefundedProcessedPayment(paymentId);
 			
 			if(refundedProcessedPayment!=null)
@@ -272,9 +271,6 @@ public class PaymentService {
 			Refund refund=razorpayClient.refunds.create(refundRequest);
 			
 			 return "Refund initiated with ID: " + refund.get("id");
-			
 	  }
-	  
-	
 }
  

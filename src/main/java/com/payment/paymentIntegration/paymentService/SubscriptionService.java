@@ -39,7 +39,7 @@ public class SubscriptionService {
 	
 	public ResponseEntity<String> createSubscription(Long userId) {
 		
-		UserSubscription userSubscription= subscriptionRepo.findByUserIdOrStatusActive(userId);
+		UserSubscription userSubscription= subscriptionRepo.findActiveSubscriptionByUserId(userId);
 		if(userSubscription!=null)
 		{
 			throw new SubscriptionAlreadyExistsException("User already has an active subscription");

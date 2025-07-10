@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+ <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -63,32 +63,14 @@
       transition: background 0.3s ease;
     }
 
-    .btn-pay {
-      background-color: #3399cc;
-      color: white;
-    }
+    .btn-pay { background-color: #3399cc; color: white; }
+    .btn-pay:hover { background-color: #2a7ca3; }
 
-    .btn-pay:hover {
-      background-color: #2a7ca3;
-    }
+    .btn-subscribe { background-color: #28a745; color: white; }
+    .btn-subscribe:hover { background-color: #208b39; }
 
-    .btn-subscribe {
-      background-color: #28a745;
-      color: white;
-    }
-
-    .btn-subscribe:hover {
-      background-color: #208b39;
-    }
-
-    .btn-refund {
-      background-color: #dc3545;
-      color: white;
-    }
-
-    .btn-refund:hover {
-      background-color: #b02a37;
-    }
+    .btn-refund { background-color: #dc3545; color: white; }
+    .btn-refund:hover { background-color: #b02a37; }
 
     input[type="text"] {
       padding: 10px;
@@ -139,20 +121,23 @@
   </div>
 
   <footer>
-      © 2025 Vaibhav Pvt. Ltd. | Crafted with ❤️ for seamless payments
-    </footer>
+    © 2025 Vaibhav Pvt. Ltd. | Crafted with ❤️ for seamless payments
+  </footer>
 
   <script>
-    async function payNow() {
-      const userId = "1432";
-      const amount = 10;
-      const orderId = 12345;
+    // Read URL parameters
+    const params = new URLSearchParams(window.location.search);
+    const userId = params.get('userId')||13;
+    const amount = params.get('amount') ||100;
+    const orderId = params.get('orderId')||12345;
+	
 
+    async function payNow() {
       try {
-        const configResp = await fetch("http://localhost:8080/api/payments/config");
+        const configResp = await fetch("/api/payments/config");
         const config = await configResp.json();
 
-        const orderResp = await fetch(`http://localhost:8080/api/payments/pay?userId=${userId}&amount=${amount}&orderId=${orderId}`, {
+        const orderResp = await fetch(`/api/payments/pay?userId=${userId}&amount=${amount}&orderId=${orderId}`, {
           method: "POST"
         });
         const orderText = await orderResp.text();
@@ -166,7 +151,7 @@
           description: "Test Payment",
           order_id: order.id,
           handler: function (response) {
-            fetch("http://localhost:8080/api/payments/verify", {
+            fetch("/api/payments/verify", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify(response)
@@ -178,7 +163,6 @@
 
         const rzp = new Razorpay(options);
         rzp.open();
-
       } catch (error) {
         console.error("Error during payment:", error);
         alert("❌ Payment failed to initiate");
@@ -186,10 +170,8 @@
     }
 
     async function subscribeNow() {
-      const userId = "8765";
-
       try {
-        const response = await fetch(`http://localhost:8080/api/subscription/create-subscription?userId=${userId}`, {
+        const response = await fetch(`/api/subscription/create-subscription?userId=${userId}`, {
           method: "POST"
         });
 
@@ -209,19 +191,16 @@
 
     async function refundPayment() {
       const paymentId = document.getElementById("paymentIdInput").value.trim();
-
-      if (!paymentId) {
-        alert("Please enter a valid Payment ID");
-        return;
-      }
+      
 
       try {
-        const response = await fetch(`http://localhost:8080/api/payments/refund?paymentId=${paymentId}`, {
+        const response = await fetch(`/api/payments/refund?paymentId=${paymentId}`, {
           method: "PUT"
         });
+		
+		
 
         const result = await response.text();
-
         if (response.ok) {
           alert("✅ " + result);
         } else {
@@ -237,6 +216,5 @@
       }
     }
   </script>
-
 </body>
 </html>

@@ -16,6 +16,8 @@ public interface PaymentRepo extends JpaRepository<PaymentOrders, Long> {
 	
 	PaymentOrders findByRazorpayPaymentId(String razorpayPaymentId);
 	
+	boolean existsByRazorpayPaymentId(String razorpayPaymentId);
+	
 	@Query(value = "SELECT * FROM payment_orders WHERE payment_status = :paymentStatus AND created_at < :time", nativeQuery = true)
 	List<PaymentOrders> findByPaymentStatusAndCreatedAtBefore(
 	    @Param("paymentStatus") String paymentStatus,

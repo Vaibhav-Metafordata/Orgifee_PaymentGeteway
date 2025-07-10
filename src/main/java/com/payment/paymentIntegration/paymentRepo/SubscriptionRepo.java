@@ -14,7 +14,7 @@ public interface SubscriptionRepo extends JpaRepository<UserSubscription, Long> 
 	UserSubscription findByRazorpaySubscriptionId(String razorpaySubscriptionId);
 	
 	@Query("SELECT s FROM UserSubscription s WHERE s.userId = :userId And s.status = 'active'")
-	UserSubscription findByUserIdOrStatusActive(@Param("userId") Long userId);
+	UserSubscription findActiveSubscriptionByUserId(@Param("userId") Long userId);
 
 
 }
