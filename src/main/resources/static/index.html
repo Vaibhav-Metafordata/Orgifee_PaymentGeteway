@@ -1,9 +1,11 @@
- <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <title>Vaibhav Payment Portal</title>
   <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
+
   <style>
     body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -48,12 +50,16 @@
     }
 
     .card h2 {
-      font-size: 1.25rem;
+      font-size: 1.3rem;
       margin-bottom: 20px;
+      color: #444;
     }
 
     .btn {
-      display: inline-block;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
       padding: 12px 28px;
       font-size: 15px;
       font-weight: 600;
@@ -63,14 +69,36 @@
       transition: background 0.3s ease;
     }
 
-    .btn-pay { background-color: #3399cc; color: white; }
-    .btn-pay:hover { background-color: #2a7ca3; }
+    .btn i {
+      font-size: 16px;
+    }
 
-    .btn-subscribe { background-color: #28a745; color: white; }
-    .btn-subscribe:hover { background-color: #208b39; }
+    .btn-pay {
+      background-color: #3399cc;
+      color: white;
+    }
 
-    .btn-refund { background-color: #dc3545; color: white; }
-    .btn-refund:hover { background-color: #b02a37; }
+    .btn-pay:hover {
+      background-color: #2a7ca3;
+    }
+
+    .btn-subscribe {
+      background-color: #28a745;
+      color: white;
+    }
+
+    .btn-subscribe:hover {
+      background-color: #208b39;
+    }
+
+    .btn-refund {
+      background-color: #dc3545;
+      color: white;
+    }
+
+    .btn-refund:hover {
+      background-color: #b02a37;
+    }
 
     input[type="text"] {
       padding: 10px;
@@ -93,30 +121,51 @@
         align-items: center;
       }
     }
+
+    .icon-blue { color: #007BFF; }
+    .icon-green { color: #28a745; }
+    .icon-red { color: #dc3545; }
+    .icon-purple { color: #6f42c1; }
+    .icon-orange { color: #fd7e14; }
   </style>
 </head>
 <body>
 
   <div class="container">
-    <h1>Welcome to Vaibhav's Payment Portal</h1>
+    <h1><i class="fas fa-store icon-orange"></i> Welcome to Vaibhav's Payment Portal</h1>
 
     <div class="cards-row">
       <div class="card">
-        <h2>Pay ₹10 (One-time)</h2>
-        <button class="btn btn-pay" onclick="payNow()">Pay Now</button>
+        <h2><i class="fas fa-credit-card icon-blue"></i> Pay ₹10 (One-time)</h2>
+        <button class="btn btn-pay" onclick="payNow()">
+          <i class="fas fa-bolt icon-orange"></i> Pay Now
+        </button>
       </div>
 
       <div class="card">
-        <h2>Subscribe Monthly</h2>
-        <button class="btn btn-subscribe" onclick="subscribeNow()">Subscribe</button>
+        <h2><i class="fas fa-calendar-alt icon-green"></i> Subscribe Monthly</h2>
+        <button class="btn btn-subscribe" onclick="subscribeNow()">
+          <i class="fas fa-sync-alt icon-purple"></i> Subscribe
+        </button>
       </div>
 
       <div class="card">
-        <h2>Request Refund</h2>
+        <h2><i class="fas fa-money-bill-wave icon-red"></i> Request Refund</h2>
         <input id="paymentIdInput" type="text" placeholder="Enter Razorpay Payment ID">
         <br />
-        <button class="btn btn-refund" onclick="refundPayment()">Refund</button>
+        <button class="btn btn-refund" onclick="refundPayment()">
+          <i class="fas fa-undo-alt icon-red"></i> Refund
+        </button>
       </div>
+    </div>
+
+    <br>
+
+    <div class="card">
+      <h2><i class="fas fa-chart-line icon-purple"></i> View My Earnings</h2>
+      <button class="btn btn-pay" onclick="window.location.href='earning.html'">
+        <i class="fas fa-wallet icon-green"></i> View Earnings
+      </button>
     </div>
   </div>
 
@@ -125,21 +174,24 @@
   </footer>
 
   <script>
-    // Read URL parameters
-    const params = new URLSearchParams(window.location.search);
-    const userId = params.get('userId')||13;
-    const amount = params.get('amount') ||100;
-    const orderId = params.get('orderId')||12345;
-	
-
     async function payNow() {
+      const buyerId = 3;
+      const sellerId = 10;
+      const orderId = 1237;
+      const amount = 10;
+
       try {
         const configResp = await fetch("/api/payments/config");
         const config = await configResp.json();
 
-        const orderResp = await fetch(`/api/payments/pay?userId=${userId}&amount=${amount}&orderId=${orderId}`, {
-          method: "POST"
+        const payload = { amount, orderId, buyerId, sellerId };
+
+        const orderResp = await fetch("/api/payments/pay", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
         });
+
         const orderText = await orderResp.text();
         const order = JSON.parse(orderText.replace("Order", "").trim());
 
@@ -155,8 +207,9 @@
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify(response)
-            }).then(res => res.text())
-              .then(data => alert("✅ Payment Verified: " + data));
+            })
+            .then(res => res.text())
+            .then(data => alert("✅ Payment Verified: " + data));
           },
           theme: { color: "#3399cc" }
         };
@@ -170,6 +223,7 @@
     }
 
     async function subscribeNow() {
+      const userId = 4;
       try {
         const response = await fetch(`/api/subscription/create-subscription?userId=${userId}`, {
           method: "POST"
@@ -191,14 +245,15 @@
 
     async function refundPayment() {
       const paymentId = document.getElementById("paymentIdInput").value.trim();
-      
+      if (!paymentId) {
+        alert("Please enter a valid Payment ID");
+        return;
+      }
 
       try {
         const response = await fetch(`/api/payments/refund?paymentId=${paymentId}`, {
           method: "PUT"
         });
-		
-		
 
         const result = await response.text();
         if (response.ok) {

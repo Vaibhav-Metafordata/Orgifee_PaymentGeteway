@@ -1,9 +1,11 @@
-package com.payment.paymentIntegration.dto;
+package com.payment.paymentIntegration.entity;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 import org.springframework.boot.context.properties.bind.DefaultValue;
+
+import com.payment.paymentIntegration.enums.WalletStatus;
 
 import jakarta.persistence.*;
 
@@ -17,20 +19,27 @@ public class PaymentOrders {
 	
 	private BigDecimal amount;
 	private String razorpayOrderId;
-	private String razorpayPaymentId="pending";
+	private String razorpayPaymentId="PENDING";
 	private String paymentStatus;
-	private String RefundId="Not Refunded";
+	private String refundId="NONE";
 	private LocalDateTime createdAt;
 	private LocalDateTime updateAt;
-	private Long userId;
+	private Long buyerId;
 	private String paymentMethod;
 	private Long orderId;
+	private Long sellerId;
+	@Enumerated(EnumType.STRING)
+	private WalletStatus walletStatus;
+	private String orderStatus;
 	
 	
 	
-	
-	
-	
+	public WalletStatus getWalletStatus() {
+		return walletStatus;
+	}
+	public void setWalletStatus(WalletStatus walletStatus) {
+		this.walletStatus = walletStatus;
+	}
 	public Long getId() {
 		return Id;
 	}
@@ -61,17 +70,12 @@ public class PaymentOrders {
 	public void setUpdateAt(LocalDateTime updateAt) {
 		this.updateAt = updateAt;
 	}
+	
 	public String getRefundId() {
-		return RefundId;
+		return refundId;
 	}
 	public void setRefundId(String refundId) {
-		RefundId = refundId;
-	}
-	public Long getUserId() {
-		return userId;
-	}
-	public void setUserId(Long userId) {
-		this.userId = userId;
+		this.refundId = refundId;
 	}
 	public String getPaymentMethod() {
 		return paymentMethod;
@@ -96,5 +100,23 @@ public class PaymentOrders {
 	}
 	public void setPaymentStatus(String paymentStatus) {
 		this.paymentStatus = paymentStatus;
+	}
+	public Long getSellerId() {
+		return sellerId;
+	}
+	public void setSellerId(Long sellerId) {
+		this.sellerId = sellerId;
+	}
+	public Long getBuyerId() {
+		return buyerId;
+	}
+	public void setBuyerId(Long buyerId) {
+		this.buyerId = buyerId;
+	}
+	public String getOrderStatus() {
+		return orderStatus;
+	}
+	public void setOrderStatus(String orderStatus) {
+		this.orderStatus = orderStatus;
 	}
 }

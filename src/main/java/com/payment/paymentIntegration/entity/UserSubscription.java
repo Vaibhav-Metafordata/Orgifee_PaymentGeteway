@@ -1,4 +1,4 @@
-package com.payment.paymentIntegration.dto;
+package com.payment.paymentIntegration.entity;
 
 import java.time.LocalDateTime;
 
@@ -91,7 +91,5 @@ public class UserSubscription {
 	}
 	public void setPlanName(String planName) {
 		this.planName = planName;
-	}
-
-   
+	}  
 }

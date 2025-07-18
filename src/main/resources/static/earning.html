@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Seller Earnings Dashboard</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 40px;
+      background-color: #f7f9fc;
+    }
+
+    input {
+      padding: 10px;
+      width: 220px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+
+    button {
+      padding: 10px 16px;
+      margin-left: 10px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #45a049;
+    }
+
+    .main-wrapper {
+      display: flex;
+      gap: 30px;
+      margin-top: 20px;
+      align-items: flex-start;
+      min-height: 400px;
+    }
+
+    .summary-container {
+      display: flex;
+      flex-direction: column;
+      gap: 30px;
+    }
+
+    .card {
+      background-color: white;
+      border: 1px solid #ddd;
+      padding: 20px;
+      border-radius: 10px;
+      width: 350px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      font-size: 18px;
+      display: flex;
+      align-items: center;
+    }
+
+    .card i {
+      font-size: 22px;
+      margin-right: 12px;
+      width: 28px;
+      text-align: center;
+    }
+
+    .card:nth-child(1) i {
+      color: #ffc107;
+    }
+
+    .card:nth-child(2) i {
+      color: #ff5722;
+    }
+
+    .card:nth-child(3) i {
+      color: #4caf50;
+    }
+
+    .payment-history-section {
+      flex: 1;
+      background-color: white;
+      border-radius: 10px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      margin-top: -70px;
+      height: 320px;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .payment-history-section h2 {
+      margin: 20px;
+      margin-bottom: 10px;
+    }
+
+    .scroll-table {
+      flex: 1;
+      overflow-y: auto;
+      overflow-x: hidden;
+      margin: 0 20px 20px 20px;
+      max-height: 240px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    th, td {
+      padding: 12px;
+      text-align: left;
+      border-bottom: 1px solid #ddd;
+      vertical-align: middle;
+    }
+
+    th {
+      background-color: #f2f2f2;
+      position: sticky;
+      top: 0;
+      z-index: 1;
+    }
+
+    .fa-icon {
+      margin-right: 8px;
+      width: 20px;
+      text-align: center;
+    }
+
+    .fa-receipt {
+      color: #17a2b8;
+    }
+
+    .fa-indian-rupee-sign {
+      color: #ffc107;
+    }
+
+    .fa-badge-check {
+      color: #28a745;
+    }
+
+    .fa-credit-card {
+      color: #007bff;
+    }
+
+    .fa-calendar-day {
+      color: #dc3545;
+    }
+  </style>
+</head>
+<body>
+
+  <h2><i class="fa-solid fa-chart-line"></i> Seller Earnings Dashboard</h2>
+
+  <input type="text" id="userIdInput" placeholder="Enter Seller ID" />
+  <button onclick="getEarnings()"><i class="fa-solid fa-magnifying-glass"></i> Fetch Earnings</button>
+
+  <div class="main-wrapper">
+    <div class="summary-container">
+      <div class="card">
+        <i class="fa-solid fa-sack-dollar"></i>
+        <strong>Total Earnings:</strong> ₹<span id="totalEarnings">0.00</span>
+      </div>
+      <div class="card">
+        <i class="fa-solid fa-clock"></i>
+        <strong>Pending Amount:</strong> ₹<span id="pendingAmount">0.00</span>
+      </div>
+      <div class="card">
+        <i class="fa-solid fa-piggy-bank"></i>
+        <strong>Withdrawable Amount:</strong> ₹<span id="withdrawable">0.00</span>
+      </div>
+    </div>
+
+    <div id="historySection" class="payment-history-section" style="display: none;">
+      <h2><i class="fa-solid fa-clock-rotate-left"></i> Payment History</h2>
+      <div class="scroll-table">
+        <table id="paymentTable">
+          <thead>
+            <tr>
+              <th><i class="fa-solid fa-receipt fa-icon"></i> Order ID</th>
+              <th><i class="fa-solid fa-indian-rupee-sign fa-icon"></i> Amount (₹)</th>
+              <th><i class="fa-solid fa-badge-check fa-icon"></i> Payment Status</th>
+              <th><i class="fa-solid fa-credit-card fa-icon"></i> Method</th>
+              <th><i class="fa-solid fa-calendar-day fa-icon"></i> Date</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    async function getEarnings() {
+      const userId = document.getElementById("userIdInput").value.trim();
+      if (!userId) {
+        alert("Please enter a valid Seller ID.");
+        return;
+      }
+
+      localStorage.setItem("userId", userId);
+
+      try {
+        const earningsResponse = await fetch(`/api/earnings/${userId}`);
+        if (!earningsResponse.ok) throw new Error("Earnings not found.");
+        const earnings = await earningsResponse.json();
+
+        document.getElementById("totalEarnings").innerText = parseFloat(earnings.totalSales).toFixed(2);
+        document.getElementById("pendingAmount").innerText = parseFloat(earnings.pendingBalance).toFixed(2);
+        document.getElementById("withdrawable").innerText = parseFloat(earnings.withdrawable).toFixed(2);
+
+        const paymentResponse = await fetch(`/api/earnings/paymentHistory/${userId}`);
+        if (!paymentResponse.ok) throw new Error("Payment history not found.");
+        const payments = await paymentResponse.json();
+
+        const paymentTable = document.getElementById("paymentTable").querySelector("tbody");
+        paymentTable.innerHTML = "";
+
+        if (payments.length > 0) {
+          payments.forEach(p => {
+            const row = `
+              <tr>
+                <td>${p.orderId || "-"}</td>
+                <td>₹${parseFloat(p.amount).toFixed(2)}</td>
+                <td>${p.paymentStatus || "-"}</td>
+                <td>${p.paymentMethod || "-"}</td>
+                <td>${formatDate(p.createdAt || p.date)}</td>
+              </tr>`;
+            paymentTable.innerHTML += row;
+          });
+        } else {
+          paymentTable.innerHTML = '<tr><td colspan="5">No payments found.</td></tr>';
+        }
+
+        document.getElementById("historySection").style.display = "block";
+
+      } catch (error) {
+        alert("Error: " + error.message);
+      }
+    }
+
+    function formatDate(dateString) {
+      if (!dateString) return "-";
+      const date = new Date(dateString);
+      return date.toLocaleString("en-IN", {
+        year: "numeric", month: "short", day: "numeric",
+        hour: "2-digit", minute: "2-digit"
+      });
+    }
+
+    window.addEventListener("DOMContentLoaded", () => {
+      const savedUserId = localStorage.getItem("userId");
+      if (savedUserId) {
+        document.getElementById("userIdInput").value = savedUserId;
+        getEarnings();
+      }
+    });
+  </script>
+
+</body>
+</html>

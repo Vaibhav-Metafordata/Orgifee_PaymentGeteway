@@ -21,16 +21,14 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
-import com.payment.paymentIntegration.dto.PaymentLinkRequestDto;
-import com.payment.paymentIntegration.dto.PaymentOrders;
-import com.payment.paymentIntegration.dto.UserSubscription;
+import com.payment.paymentIntegration.entity.PaymentOrders;
+import com.payment.paymentIntegration.enums.WalletStatus;
+import com.payment.paymentIntegration.dto.PaymentOrderRequestDto;
 import com.payment.paymentIntegration.exception.IllegalArgumentExceptio;
 import com.payment.paymentIntegration.exception.RefundAlreadyDone;
-import com.payment.paymentIntegration.paymentRepo.PaymentRepo;
-import com.payment.paymentIntegration.paymentRepo.SubscriptionRepo;
+import com.payment.paymentIntegration.paymentRepo.PaymentOrdersRepo;
 import com.razorpay.Order;
 import com.razorpay.Payment;
-import com.razorpay.PaymentLink;
 import com.razorpay.RazorpayClient;
 import com.razorpay.RazorpayException;
 import com.razorpay.Refund;
@@ -54,16 +52,16 @@ public class PaymentService {
 
 
 	@Autowired
-	private PaymentRepo paymentRepo;
+	private PaymentOrdersRepo paymentRepo;
 	
 
 	
-	public Order createOrder(Long UserId,BigDecimal amount,Long orderId) throws RazorpayException
+	public Order createOrder(PaymentOrderRequestDto paymenRequestDto) throws RazorpayException
 	{
 		RazorpayClient razorpayClient=new RazorpayClient(apiKey, apiSecret);
 		
 		JSONObject jsonObject=new JSONObject();
-		BigDecimal amountINPaise =amount.multiply(new BigDecimal("100"));
+		BigDecimal amountINPaise =paymenRequestDto.getAmount().multiply(new BigDecimal("100"));
 		jsonObject.put("amount", amountINPaise.intValue());
 		jsonObject.put("currency","INR");
 		String receiptId ="recepit"+UUID.randomUUID().toString().substring(0, 20);
@@ -73,13 +71,15 @@ public class PaymentService {
 		
 		
 		PaymentOrders payorders =new PaymentOrders();
-		payorders.setUserId(UserId);
-		payorders.setOrderId(orderId);
-		payorders.setAmount(amount);
+		payorders.setBuyerId(paymenRequestDto.getBuyerId());
+		payorders.setOrderId(paymenRequestDto.getOrderId());
+		payorders.setAmount(paymenRequestDto.getAmount());
 		payorders.setRazorpayOrderId(order.get("id"));
 		payorders.setPaymentStatus(order.get("status"));
 		payorders.setCreatedAt(LocalDateTime.now());
 		payorders.setUpdateAt(LocalDateTime.now());
+		payorders.setSellerId(paymenRequestDto.getSellerId());
+		payorders.setWalletStatus(WalletStatus.WAITING);
 		
 		paymentRepo.save(payorders); 
 
@@ -98,7 +98,7 @@ public class PaymentService {
 		
 		paymentOrders.setPaymentStatus(payment.get("status"));
 		paymentOrders.setPaymentMethod(payment.get("method"));
-		
+		paymentOrders.setWalletStatus(WalletStatus.PENDING);
 		Date createdAtDate = (Date) payment.get("created_at");
 
 		LocalDateTime createdAt = createdAtDate.toInstant()
@@ -125,44 +125,6 @@ public class PaymentService {
 			
 		}
 	}
-
-	
-//	public String createPaymentLink(PaymentLinkRequestDto dto) throws RazorpayException {
-//	    RazorpayClient razorpayClient = new RazorpayClient(apiKey, apiSecret);
-//	    BigDecimal amountInPaise = dto.getAmount().multiply(new BigDecimal("100"));
-//
-//	    JSONObject request = new JSONObject();
-//	    request.put("amount", amountInPaise.intValue());
-//	    request.put("currency", "INR");
-//	    request.put("accept_partial", false);
-//	    request.put("description", dto.getDescription());
-//	    request.put("reference_id", dto.getReferenceId() != null ? dto.getReferenceId() : "txn_" + UUID.randomUUID().toString().substring(0, 10));
-//
-//	    JSONObject customer = new JSONObject();
-//	    customer.put("name", dto.getCustomerName());
-//	    customer.put("contact", dto.getCustomerContact());
-//	    customer.put("email", dto.getCustomerEmail());
-//	    request.put("customer", customer);
-//
-//	    request.put("notify", new JSONObject().put("email", true).put("sms", true));
-//
-//	    PaymentLink link = razorpayClient.paymentLink.create(request);
-//
-//	    PaymentOrders payment = new PaymentOrders();
-//	    payment.setUserId(dto.getUserId());
-//	    payment.setOrderId(dto.getOrderId());
-//	    payment.setAmount(dto.getAmount());
-//	    payment.setPaymentStatus("created");
-//	    payment.setRazorpayReferenceId(link.get("id"));
-//	    payment.setPaymentLinkUrl(link.get("short_url"));
-//	    payment.setCreatedAt(LocalDateTime.now());
-//	    payment.setUpdateAt(LocalDateTime.now());
-//
-//	    paymentRepo.save(payment);
-//
-//	    return link.get("short_url");
-//	}
-	
 
 	
 	public ResponseEntity<String> processWebhook(String payload, String signature){
@@ -193,7 +155,7 @@ public class PaymentService {
 	               {
 	               paymentOrders.setPaymentStatus(status);
 	               paymentOrders.setUpdateAt(updateAt);
-	               paymentOrders.setPaymentMethod(method);  
+	               paymentOrders.setPaymentMethod(method);
 	               paymentRepo.save(paymentOrders);
 
 	               }
@@ -217,6 +179,7 @@ public class PaymentService {
 	                    paymentOrders.setPaymentStatus("Refunded - " + status);
 	                    paymentOrders.setUpdateAt(updateAt);
 	                    paymentOrders.setRefundId(entity.getString("id"));
+	                    paymentOrders.setWalletStatus(WalletStatus.REFUNDED);
 	                    paymentRepo.save(paymentOrders);
 	                }
 	            }
@@ -266,10 +229,7 @@ public class PaymentService {
 			{
 				throw new RefundAlreadyDone("Refund Already Completed");
 			}
-			
-			
 			Refund refund=razorpayClient.refunds.create(refundRequest);
-			
 			 return "Refund initiated with ID: " + refund.get("id");
 	  }
 }

@@ -1,23 +1,21 @@
 package com.payment.paymentIntegration.paymentService;
 
+import java.security.MessageDigest;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.util.List;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 
-import org.apache.commons.codec.binary.Hex;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
-import com.payment.paymentIntegration.dto.UserSubscription;
+import com.payment.paymentIntegration.entity.UserSubscription;
 import com.payment.paymentIntegration.exception.SubscriptionAlreadyExistsException;
 import com.payment.paymentIntegration.paymentRepo.SubscriptionRepo;
 import com.razorpay.Plan;
@@ -108,6 +106,10 @@ public class SubscriptionService {
                         .getJSONObject("subscription")
                         .getJSONObject("entity");
                
+                Long UserIdFromNotes=Long.parseLong(entity.getJSONObject("notes").getString("user_id"));
+                System.out.println(UserIdFromNotes);
+                
+                
                 		
                 UserSubscription sub =subscriptionRepo.findByRazorpaySubscriptionId(entity.getString("id"));
                 		
@@ -141,12 +143,13 @@ public class SubscriptionService {
 		
 	}
 	private boolean verifySignature(String payload, String actualSignature, String secret) throws Exception {
-       Mac sha256Hmac = Mac.getInstance("HmacSHA256");
-       SecretKeySpec secretKey = new SecretKeySpec(secret.getBytes(), "HmacSHA256");
-       sha256Hmac.init(secretKey);
-       byte[] hash = sha256Hmac.doFinal(payload.getBytes());
-       String generatedSignature = Hex.encodeHexString(hash);
-       return generatedSignature.equals(actualSignature);
-   }
+	    Mac sha256Hmac = Mac.getInstance("HmacSHA256");
+	    SecretKeySpec secretKey = new SecretKeySpec(secret.getBytes(), "HmacSHA256");
+	    sha256Hmac.init(secretKey);
 
+	    byte[] hash = sha256Hmac.doFinal(payload.getBytes());
+	    String generatedSignature = org.apache.commons.codec.binary.Hex.encodeHexString(hash);
+
+	    return MessageDigest.isEqual(generatedSignature.getBytes(), actualSignature.getBytes());
+	}
 }

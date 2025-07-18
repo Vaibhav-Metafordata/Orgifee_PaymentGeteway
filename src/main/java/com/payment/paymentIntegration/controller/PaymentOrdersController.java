@@ -4,10 +4,6 @@
 import java.math.BigDecimal;
 import java.util.Map;
 
-import javax.crypto.Mac;
-import javax.crypto.spec.SecretKeySpec;
-
-import org.apache.commons.codec.binary.Hex;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -22,16 +18,14 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.payment.paymentIntegration.dto.PaymentLinkRequestDto;
-import com.payment.paymentIntegration.dto.PaymentOrders;
-import com.payment.paymentIntegration.paymentRepo.PaymentRepo;
+import com.payment.paymentIntegration.dto.PaymentOrderRequestDto;
 import com.payment.paymentIntegration.paymentService.PaymentService;
 import com.razorpay.Order;
 import com.razorpay.RazorpayException;
 
 @RestController
 @RequestMapping("api/payments")
-public class PaymentController {
+public class PaymentOrdersController {
 	
 	@Value("${razorpay.api.secret}")
 	private String apiSecret;
@@ -46,21 +40,12 @@ public class PaymentController {
 	}
 	
 	@PostMapping("/pay")
-	public ResponseEntity<String> createOrder(@RequestParam Long userId ,@RequestParam BigDecimal amount,@RequestParam Long orderId) throws RazorpayException
+	public ResponseEntity<String> createOrder(@RequestBody PaymentOrderRequestDto paymenRequestDto) throws RazorpayException
 	{	
-		Order order=paymentService.createOrder(userId,amount,orderId);
+		Order order=paymentService.createOrder(paymenRequestDto);
 		return ResponseEntity.status(HttpStatus.CREATED).body(order.toJson().toString());
 		
 	}
-	
-//	@PostMapping("/pay")
-//	public ResponseEntity<String> createPaymentLink(@RequestBody PaymentLinkRequestDto dto ) throws RazorpayException
-//	{
-//	
-//			String link=paymentService.createPaymentLink(dto);
-//			
-//			return ResponseEntity.status(HttpStatus.CREATED).body(link);
-//	}
 	
 	@PostMapping("/verify")
 	public ResponseEntity<String> verifyPayment(@RequestBody Map<String, Object> data) throws RazorpayException

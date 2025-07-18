@@ -5,7 +5,8 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import com.payment.paymentIntegration.dto.UserSubscription;
+import com.payment.paymentIntegration.entity.UserSubscription;
+
 import java.util.List;
 
 @Repository
