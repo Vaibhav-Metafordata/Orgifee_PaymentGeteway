@@ -41,7 +41,15 @@ public interface PaymentOrdersRepo extends JpaRepository<PaymentOrders, Long> {
 	@Query(value = "SELECT * FROM payment_orders WHERE seller_id = :userId AND payment_status <> 'Created'", nativeQuery = true)
 	List<PaymentOrders> findBySellerIdAndPaymentStatusNotCreated(@Param("userId") Long userId);
 
+	@Query("SELECT p FROM PaymentOrders p WHERE p.sellerId = :sellerId AND p.createdAt >= :fromDate AND p.paymentStatus <> 'created'")
+	List<PaymentOrders> findHistoryBySellerID(
+	    @Param("sellerId") Long sellerId,
+	    @Param("fromDate") LocalDateTime fromDate
+	);
 
+	
 	PaymentOrders findByRefundId(String refundId);
+	
+	List<PaymentOrders> findBySellerId(Long sellerId);
 	
 }

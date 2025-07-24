@@ -42,5 +42,35 @@ public class GlobalExceptionHandler {
 		
 		return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(responce);
 	}
+	
+	@ExceptionHandler(SubscriptionNotFound.class)
+	public ResponseEntity<Map<String,String>> handleSubscriptionNotFoundException(SubscriptionNotFound ex)
+	{
+		Map<String,String> responce=new HashMap<>();
+		responce.put("error", "Input Error");
+		responce.put("message", ex.getMessage());
+		
+		return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(responce);
+	}
+	
+	@ExceptionHandler(SubscriptionUserMismatchException.class)
+	public ResponseEntity<Map<String,String>> handleSubscriptionUserMismatchException(SubscriptionUserMismatchException ex)
+	{
+		Map<String,String> responce=new HashMap<>();
+		responce.put("error", "Input Error");
+		responce.put("message", ex.getMessage());
+		
+		return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(responce);
+	}
+	
+	@ExceptionHandler(InvalidPayloadException.class)
+	public ResponseEntity<Map<String,String>> handleNullPayloadException(InvalidPayloadException ex)
+	{
+		Map<String,String> responce=new HashMap<>();
+		responce.put("error", "Input Error");
+		responce.put("message", ex.getMessage());
+		
+		return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(responce);
+	}
 
 }

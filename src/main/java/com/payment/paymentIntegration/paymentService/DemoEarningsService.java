@@ -15,7 +15,7 @@ import com.payment.paymentIntegration.entity.PaymentOrders;
 import com.payment.paymentIntegration.paymentRepo.PaymentOrdersRepo;
 
 @Service
-public class EarningsService {
+public class DemoEarningsService {
 	
 	@Autowired
 	PaymentOrdersRepo paymentRepo;
@@ -48,5 +48,8 @@ public class EarningsService {
 		}
 		return dto;
 	}
+	
+	
+	
 
 }

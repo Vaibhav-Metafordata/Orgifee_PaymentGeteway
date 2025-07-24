@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Earnings Page</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet" />
+  <style>
+    /* [Same CSS as before, no change] */
+    body {
+      margin: 0;
+      font-family: 'Inter', sans-serif;
+      background-color: #f5f9ff;
+    }
+
+    .container {
+      max-width: 480px;
+      margin: auto;
+      padding: 20px;
+    }
+
+    .header {
+      text-align: center;
+      padding: 10px;
+      background: linear-gradient(135deg, #0f9d58, #1abc9c);
+      color: white;
+      border-bottom-left-radius: 20px;
+      border-bottom-right-radius: 20px;
+    }
+
+    .earning-boxes {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 20px;
+      gap: 10px;
+    }
+
+    .earning-card {
+      background-color: white;
+      flex: 1;
+      padding: 12px;
+      border-radius: 12px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      text-align: center;
+    }
+
+    .earning-card h3 {
+      margin: 0;
+      font-size: 14px;
+      color: #555;
+    }
+
+    .earning-card p {
+      margin: 5px 0 0;
+      font-size: 20px;
+      font-weight: bold;
+      color: #0f9d58;
+    }
+
+    .filters {
+      display: flex;
+      justify-content: space-between;
+      margin: 20px 0 10px;
+    }
+
+    .filters select {
+      padding: 6px 10px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      font-size: 14px;
+    }
+
+    .history-title {
+      font-weight: bold;
+      font-size: 16px;
+      margin-bottom: 10px;
+      color: #333;
+    }
+
+    .earning-item {
+      background-color: #eafaf1;
+      border-radius: 12px;
+      padding: 14px;
+      margin-bottom: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .item-left {
+      max-width: 70%;
+    }
+
+    .item-left .order-id {
+      font-size: 12px;
+      color: #666;
+    }
+
+    .item-left .product-name {
+      font-weight: 600;
+      font-size: 15px;
+      margin: 4px 0;
+    }
+
+    .item-left .qty {
+      font-size: 12px;
+      color: #999;
+    }
+
+    .item-right {
+      text-align: right;
+    }
+
+    .item-right .amount {
+      font-weight: bold;
+      font-size: 16px;
+      color: #0f9d58;
+    }
+
+    .item-right .date {
+      font-size: 12px;
+      color: #555;
+    }
+
+    .item-right .method {
+      font-size: 12px;
+      background-color: #d0f0ff;
+      color: #0277bd;
+      border-radius: 10px;
+      padding: 2px 8px;
+      display: inline-block;
+      margin-top: 4px;
+    }
+
+    @media (max-width: 400px) {
+      .earning-item {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      .item-right {
+        margin-top: 10px;
+        text-align: left;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <h2>Earnings</h2>
+  </div>
+
+  <div class="container">
+    <div class="earning-boxes">
+      <div class="earning-card">
+        <h3>Total Estimated Earnings</h3>
+        <p id="totalEarning">₹0</p>
+      </div>
+      <div class="earning-card">
+        <h3>Past 7 Days Earnings</h3>
+        <p id="sevenDayEarning">₹0</p>
+      </div>
+    </div>
+
+    <div class="filters">
+      <select id="filterSelect">
+        <option value="7days">7 Days</option>
+        <option value="lastMonth">Last Month</option>
+        <option value="lastYear">Last Year</option>
+      </select>
+      <select id="sortSelect">
+        <option value="">Sort By</option>
+        <option value="method">Payment Method</option>
+      </select>
+    </div>
+
+    <div class="history-title">Earning History</div>
+    <div id="earningList"></div>
+  </div>
+
+  <script>
+    const sellerId = 100; // Replace with actual sellerId
+
+    async function fetchEarnings() {
+      const filter = document.getElementById("filterSelect").value;
+      const sort = document.getElementById("sortSelect").value;
+      const url = `/api/earnings/history?sellerId=${sellerId}&filter=${filter}&sort=${sort}`;
+
+      const response = await fetch(url);
+      const data = await response.json();
+
+      document.getElementById("totalEarning").textContent = "₹" + data.totalEarning;
+      document.getElementById("sevenDayEarning").textContent = "₹" + data.sevenDayEarning;
+
+      const earningList = document.getElementById("earningList");
+      earningList.innerHTML = "";
+
+      data.earningHistory.forEach(item => {
+        const earningItem = document.createElement("div");
+        earningItem.className = "earning-item";
+        earningItem.innerHTML = `
+          <div class="item-left">
+            <div class="order-id">Order #${item.orderId}</div>
+            <div class="product-name">${item.productName}</div>
+            <div class="qty">Qty : ${item.quantity}</div>
+          </div>
+          <div class="item-right">
+            <div class="amount">+ ₹${item.amount}</div>
+            <div class="date">${item.date}</div>
+            <div class="method">${item.method}</div>
+          </div>`;
+        earningList.appendChild(earningItem);
+      });
+    }
+
+    document.getElementById("filterSelect").addEventListener("change", fetchEarnings);
+    document.getElementById("sortSelect").addEventListener("change", fetchEarnings);
+
+    // Initial call
+    fetchEarnings();
+  </script>
+</body>
+</html>

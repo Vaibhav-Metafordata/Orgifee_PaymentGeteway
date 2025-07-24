@@ -8,6 +8,8 @@ import java.time.ZoneId;
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 
+import org.json.JSONException;
+import org.json.JSONException;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -16,7 +18,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import com.payment.paymentIntegration.entity.UserSubscription;
+import com.payment.paymentIntegration.exception.InvalidPayloadException;
 import com.payment.paymentIntegration.exception.SubscriptionAlreadyExistsException;
+import com.payment.paymentIntegration.exception.SubscriptionNotFound;
+import com.payment.paymentIntegration.exception.SubscriptionUserMismatchException;
 import com.payment.paymentIntegration.paymentRepo.SubscriptionRepo;
 import com.razorpay.Plan;
 import com.razorpay.RazorpayClient;
@@ -78,7 +83,7 @@ public class SubscriptionService {
             sub.setUserId(userId);
             sub.setStartDate(null); 
             sub.setEndDate(null);
-            sub.setCreateAt(LocalDateTime.now());
+            sub.setCreatedAt(LocalDateTime.now());
             sub.setPlanName(planName);
             subscriptionRepo.save(sub);
 
@@ -91,13 +96,37 @@ public class SubscriptionService {
 	
 	
 	public ResponseEntity<String> processWebhook(String payload, String signature){
+		
+		
 		 try {
             if (!verifySignature(payload, signature, apiSecret)) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Invalid Signature");
             }
 
-            JSONObject json = new JSONObject(payload);
+            if(payload == null || payload.trim().isEmpty()) {
+    		    throw new InvalidPayloadException("Invalid payload: Empty or null");
+    		}
+            
+          
+
+            
+            JSONObject json;
+            try {
+                json = new JSONObject(payload);
+            } catch (JSONException e) {
+                return ResponseEntity.badRequest().body("Invalid payload: Not valid JSON");
+            }
+
+            
+            if (!json.has("event")) {
+                return ResponseEntity.badRequest().body("Missing 'event' in webhook payload");
+            }
+
             String event = json.getString("event");
+
+            if (!event.startsWith("subscription.")) {
+                return ResponseEntity.ok("Not a subscription event");
+            }
             
          
             	if (event.startsWith("subscription.")) {
@@ -106,20 +135,31 @@ public class SubscriptionService {
                         .getJSONObject("subscription")
                         .getJSONObject("entity");
                
+                if (!entity.has("notes") || !entity.getJSONObject("notes").has("user_id")) {
+                    return ResponseEntity.badRequest().body("Missing user_id in notes");
+                }
+                
                 Long UserIdFromNotes=Long.parseLong(entity.getJSONObject("notes").getString("user_id"));
                 System.out.println(UserIdFromNotes);
-                
-                
                 		
-                UserSubscription sub =subscriptionRepo.findByRazorpaySubscriptionId(entity.getString("id"));
+                UserSubscription sub = subscriptionRepo.findByRazorpaySubscriptionId(entity.getString("id"));
+                
+                if(sub==null)
+                {
+                	throw new SubscriptionNotFound("Subscription Not Found");
+                }
+                
+                if(!UserIdFromNotes.equals(sub.getUserId()))
+                {
+                	throw new SubscriptionUserMismatchException("Subscription user mismatch");
+                }
                 		
                 sub.setRazorpaySubscriptionId(entity.getString("id"));
                 sub.setCustomerId(entity.getString("customer_id"));
                 sub.setPlanId(entity.getString("plan_id"));
                 sub.setStatus(entity.getString("status"));
-                Long userId = Long.parseLong(entity.getJSONObject("notes").getString("user_id"));
-                sub.setUserId(userId);
-
+                sub.setUserId(UserIdFromNotes);
+ 
                 long startEpoch = entity.optLong("current_start");
                 long endEpoch = entity.optLong("current_end");
 
@@ -129,7 +169,7 @@ public class SubscriptionService {
                 sub.setEndDate(Instant.ofEpochSecond(endEpoch)
                                 .atZone(ZoneId.of("Asia/Kolkata"))
                                 .toLocalDateTime());
-                sub.setCreateAt(LocalDateTime.now());
+                sub.setCreatedAt(LocalDateTime.now());
 
                 subscriptionRepo.save(sub);
         }       
